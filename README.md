@@ -13,9 +13,9 @@ straight from Go code.
 In order to use this library you need a fully working copy of the DECtalk DAPI
 SDK.
 
-This library is able to target the DECtalk 5.0 DAPI on Windows and Linux through
-cross-compiling. If you do not have a copy of DECtalk's files for DAPI, a
-modernized copy of the DECtalk 5.0 beta source tree is available at
+This library is able to target the DECtalk 4.61 or 5.0 DAPI on Windows and Linux
+through cross-compiling. If you do not have a copy of DECtalk's files for DAPI,
+a modernized copy of the DECtalk 5.0 beta source tree is available at
 https://github.com/dectalk/dectalk which you can compile yourself.
 
 If you want to cross-compile for Windows 32-bit (as some copies of the SDK only
