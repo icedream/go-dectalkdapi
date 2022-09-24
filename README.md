@@ -31,15 +31,13 @@ You need to provide Go with the correct paths for this library to find the
 needed binary files. On Linux, you can do this before building with Go:
 
 ```bash
-CGO_LDFLAGS="-L${PATH_TO_DECTALK_INSTALL}/Us/"
+CGO_LDFLAGS="-L${PATH_TO_DECTALK_INSTALL}/Us" # DECtalk 5.0 Windows SDK
+CGO_LDFLAGS="-L${PATH_TO_DECTALK_INSTALL}/lib" # DECtalk 4.61/5.0 Linux SDK
 CGO_CFLAGS="-I${PATH_TO_DECTALK_INSTALL}/include"
-export CGO_ENABLED=1 GOOS=windows GOARCH=386 \
-    CGO_LDFLAGS CGO_CFLAGS
+export CGO_ENABLED=1 CGO_LDFLAGS CGO_CFLAGS
 ```
 
 You need to replace or set `${PATH_TO_DECTALK_INSTALL}` to the path of your own copy of DECtalk SDK.
-
-If you want to use a different default language, you can replace `Us/` respectively as well.
 
 With the above information, you can build the example code provided in this
 repository. It will simply render a popular speech-synthesized interpretation of
