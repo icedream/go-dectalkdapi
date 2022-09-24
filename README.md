@@ -40,6 +40,7 @@ export CGO_ENABLED=1 GOARCH=386 CC=i686-w64-mingw32-gcc
 - Manipulation of speech rate through API call
 - Log output for text, phonemes, syllables
 - Fast-pace single-letter speech output
+- Speaker switching through API call
 - Multi-language support
 - Wrapping of native error codes to Go error objects
 - Simple version querying
@@ -47,7 +48,6 @@ export CGO_ENABLED=1 GOARCH=386 CC=i686-w64-mingw32-gcc
 ### Currently missing features
 
 - Audio output to memory buffer
-- Speaker switching through API call
 - Callback functionality
 - Manipulation of speaker through API call
 - Additional Go-side checks for bad code conditions such as those known to lead

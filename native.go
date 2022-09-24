@@ -532,17 +532,38 @@ func (t *TTS) SetRate(rate uint32) error {
 	return mmResultToError(C.TextToSpeechSetRate(t.handle, C.DWORD(rate)))
 }
 
+// GetSpeaker returns the value of the identifier for the last voice that has
+// spoken.
+//
+// Note that even after calling #SetSpeaker(), #GetSpeaker() returns the value
+// for the previous speaking voice until the new voice actually speaks.
+func (t *TTS) GetSpeaker() (Speaker, error) {
+	var speakerC C.SPEAKER_T
+	err := mmResultToError(C.TextToSpeechGetSpeaker(t.handle, &speakerC))
+	if err != nil {
+		return 0, err
+	}
+	return Speaker(speakerC), nil
+}
+
+// SetSpeaker sets the voice of the speaker that the text-to-speech system is to
+// use.
+//
+// The change in speaking voice is not effective until the next phrase boundary.
+// All queued audio encountered before the phrase boundary is unaffected.
+func (t *TTS) SetSpeaker(speaker Speaker) error {
+	return mmResultToError(C.TextToSpeechSetSpeaker(t.handle, C.SPEAKER_T(speaker)))
+}
+
 // TODO - MMRESULT #AddBuffer(LPTTS_HANDLE_T phTTS, LPTTS_BUFFER_T pTTSbuffer) Adds a shared-memory buffer allocated by the calling application to the memory buffer list.
 // TODO - MMRESULT #CloseInMemory(LPTTS_HANDLE_T phTTS) Returns the text-to-speech system to its startup state.
 // TODO - DWORD #EnumLangs(LPLANG_ENUM *langs) retrieves information about what languages are available in the system.
 // TODO - MMRESULT #GetCaps(LPTTS_CAPS_T lpTTScaps) Retrieves the capabilities of the text-to-speech system
 // TODO - DWORD #GetFeatures(void) Retrieves information, in the form of a bitmask, about the features of DECtalk Software. (maskable to the list supplied in the header file TTSFEAT.H.)
 // TODO - MMRESULT #GetRate(LPTTS_HANDLE_T phTTS, LPDWORD pdwRate) Returns the speaking rate of the text-to-speech system.
-// TODO - MMRESULT #GetSpeaker(LPTTS_HANDLE_T phTTS, LPSPEAKER_T lpSpeaker) Returns the last speaking voice to have spoken.
 // TODO - MMRESULT #GetStatus(LPTTS_HANDLE_T phTTS, LPDWORD dwIdentifier[ ], LPDWORD dwStatus[ ], DWORD dwNumberOfStatusValues) Gets the status of the text-to-speech system
 // TODO - MMRESULT #OpenInMemory(LPTTS_HANDLE_T phTTS, DWORD dwFormat) <requires TextToSpeechAddBuffer> Produces buffered speech samples in wave format whenever #Speak function is called. The calling application is notified when memory buffer is filled.
 // TODO - MMRESULT #ReturnBuffer(LPTTS_HANDLE_T phTTS, LPTTS_BUFFER_T *ppTTSbuffer) Returns the current shared-memory buffer.
-// TODO - MMRESULT #SetSpeaker(LPTTS_HANDLE_T phTTS, SPEAKER_T Speaker) Selects one of nine speaking voices.
 // TODO - MMRESULT #StartupEx(LPTTS_HANDLE_T *phTTS, UINT uiDeviceNumber, DWORD dwDeviceOptions, VOID (*DtCallbackRoutine)(), LONG dwCallbackParameter) TextToSpeechStartup but with custom callback
 // TODO - ULONG TextToSpeechVersionEx(LPVERSION_INFO *ver)
 // TODO - struct LPVERSION_INFO
