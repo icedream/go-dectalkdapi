@@ -64,4 +64,4 @@ What I am doing is to provide my own code, available for anyone to inspect the
 work that I have done around DECtalk's API specification. That sole work I can
 safely publish and license.
 
-That said, this project's code is licensed under the MIT license.
+That said, this project's code is licensed under the [MIT license](LICENSE.txt).
