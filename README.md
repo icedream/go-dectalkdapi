@@ -11,15 +11,19 @@ straight from Go code.
 ## Requirements
 
 In order to use this library you need a fully working copy of the DECtalk DAPI
-SDK. If you search around on the internet for long enough, you may find one, but
-I'm not going to provide such a copy here for copyright/licensing reasons.
+SDK.
 
-Also, as of right now this library only really supports building against the
-32-bit Windows binary files, so the only way to build anything with this library
-currently is with `CGO_ENABLED=1 GOOS=windows GOARCH=386`. Sorry.
+This library is able to target the DECtalk 5.0 DAPI on Windows and Linux through
+cross-compiling. If you do not have a copy of DECtalk's files for DAPI, a
+modernized copy of the DECtalk 5.0 beta source tree is available at
+https://github.com/dectalk/dectalk which you can compile yourself.
 
-If you want to cross-compile you can rely on mingw64
-(`CC=i686-w64-mingw32-gcc`).
+If you want to cross-compile for Windows 32-bit (as some copies of the SDK only
+ship with binaries for that) you can rely on [MinGW-w64](https://www.mingw-w64.org/):
+
+```bash
+export CGO_ENABLED=1 GOARCH=386 CC=i686-w64-mingw32-gcc
+```
 
 ## Building
 

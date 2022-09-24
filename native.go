@@ -1,12 +1,56 @@
-//go:build windows && 386
-// +build windows,386
+//go:build (windows && 386) || linux
+// +build windows,386 linux
 
 package dectalkdapi
 
 /*
-#cgo LDFLAGS: -ldectalk -lwinmm
+#cgo windows LDFLAGS: -ldectalk -lwinmm
+#cgo linux LDFLAGS: -ltts
+
+#if defined WIN32
+
 #include <windows.h>
 #include <TTSAPI.H>
+
+const HWND ZeroHWND = NULL;
+
+#else
+
+#include <stdlib.h>
+#include <dtk/ttsapi.h>
+
+// define constants that cgo can't use
+#define WAVERR_BADFORMAT 32
+
+// define structs that don't exist on linux
+typedef uint HWND;
+const HWND ZeroHWND = 0;
+
+#endif
+
+// functions which have different signatures between linux and windows
+#if defined __linux__ || defined VXWORKS || defined _SPARC_SOLARIS_ || defined __osf__
+MMRESULT FixedTextToSpeechStartup(
+	HWND hWnd,
+	LPTTS_HANDLE_T * pphTTS,
+	UINT uiDeviceNumber,
+	DWORD dwDeviceOptions
+) {
+    // Linux code has a "New Audio Integration", hence the parameters are all over the place…
+	return TextToSpeechStartup(
+		pphTTS,
+		uiDeviceNumber,
+		dwDeviceOptions,
+		NULL,
+		hWnd // code mentioned "Backward compatibilty for TextToSpeechStartupEx" here
+	);
+}
+#endif
+#ifdef WIN32
+MMRESULT FixedTextToSpeechStartup(HWND a, LPTTS_HANDLE_T *b, UINT c, DWORD d) {
+	return TextToSpeechStartup(a, b, c, d);
+}
+#endif
 */
 import "C"
 
@@ -15,20 +59,34 @@ import (
 	"unsafe"
 )
 
-func parseIntAsBool(value C.int) bool {
+func parseIntAsBool(value C.BOOL) bool {
 	return value == 0
 }
 
-func boolToInt(value bool) C.int {
+func boolToInt(value bool) C.BOOL {
 	if value {
 		return 0
 	}
-	return -1
+	return 1
 }
 
 const waveMapper = C.WAVE_MAPPER
 
-type Log uint
+type Speaker C.SPEAKER_T
+
+const (
+	Paul   = C.PAUL
+	Betty  = C.BETTY
+	Harry  = C.HARRY
+	Frank  = C.FRANK
+	Dennis = C.DENNIS
+	Kit    = C.KIT
+	Ursula = C.URSULA
+	Rita   = C.RITA
+	Wendy  = C.WENDY
+)
+
+type Log C.DWORD
 
 const (
 	// Log text.
@@ -41,7 +99,7 @@ const (
 	Syllables = C.LOG_SYLLABLES
 )
 
-type MMResult uint
+type MMResult C.DWORD
 
 const (
 	// No error occurred.
@@ -71,10 +129,18 @@ const (
 	InvalidParam = C.MMSYSERR_INVALPARAM
 
 	// Device ID out of range.
-	// BadDeviceID = C.MMSYSERR_BADDEVICE_ID
+	BadDeviceID = C.MMSYSERR_BADDEVICEID
 
 	// Wave output device does not support request format.
+	//
+	// This error is only returned on Windows NT.
 	BadFormat = C.WAVERR_BADFORMAT
+
+	// Specified alias not found in WIN.INI.
+	// InvalidAlias = C.MSYSERR_INVALIDALIAS
+
+	// Invalid flag passed.
+	// InvalidFlag = C.MSYSERR_INVALFLAG
 )
 
 func mmResultToError(codeC C.uint) error {
@@ -101,7 +167,7 @@ var mmErrorMessages = map[MMResult]string{
 
 var ErrCanNotLoadLanguage = errors.New("can not load language")
 
-type TTSLangErrorCode uint
+type TTSLangErrorCode C.DWORD
 
 const (
 	NotSupported TTSLangErrorCode = C.TTS_NOT_SUPPORTED
@@ -131,7 +197,7 @@ func checkTTSLang(handle C.uint) error {
 }
 
 // WaveFormat represents an audio sample format.
-type WaveFormat uint
+type WaveFormat C.DWORD
 
 const (
 	// Mono, 8-bit 11.025 kHz sample rate
@@ -144,19 +210,20 @@ const (
 	WaveFormat08M08 = C.WAVE_FORMAT_08M08
 )
 
-type TTSFlags uint
+type TTSFlags C.DWORD
 
 const (
 	Normal TTSFlags = C.TTS_NORMAL
 	Force           = C.TTS_FORCE
 )
 
-type DeviceOption uint
+type DeviceOption C.DWORD
 
 const (
 	DoNotUseAudioDevice DeviceOption = C.DO_NOT_USE_AUDIO_DEVICE
 	OwnAudioDevice      DeviceOption = C.OWN_AUDIO_DEVICE
 	ReportOpenError     DeviceOption = C.REPORT_OPEN_ERROR
+	UseSAPI5AudioDevice DeviceOption = C.USE_SAPI5_AUDIO_DEVICE
 )
 
 // TTSLanguage represents a language loaed into the DECtalk Multi-Language (ML)
@@ -189,14 +256,14 @@ type TTS struct {
 
 func Startup(deviceOptions DeviceOption) (*TTS, error) {
 	tts := new(TTS)
-	if err := tts.startup(nil, deviceOptions); err != nil {
+	if err := tts.startup(C.ZeroHWND, deviceOptions); err != nil {
 		return nil, err
 	}
 	return tts, nil
 }
 
 func (t *TTS) startup(windowHandle C.HWND, deviceOptions DeviceOption) error {
-	return mmResultToError(C.TextToSpeechStartup(windowHandle, &t.handle, waveMapper, C.ulong(deviceOptions)))
+	return mmResultToError(C.FixedTextToSpeechStartup(windowHandle, &t.handle, waveMapper, C.DWORD(deviceOptions)))
 }
 
 // UnloadUserDictionary unloads a user dictionary. You must unload any
@@ -253,7 +320,7 @@ func (t *TTS) LoadUserDictionary(dictFile string) error {
 func (t *TTS) OpenWaveOutFile(outFile string, format WaveFormat) error {
 	outFileC := C.CString(outFile)
 	defer C.free(unsafe.Pointer(outFileC))
-	return mmResultToError(C.TextToSpeechOpenWaveOutFile(t.handle, outFileC, C.ulong(format)))
+	return mmResultToError(C.TextToSpeechOpenWaveOutFile(t.handle, outFileC, C.DWORD(format)))
 }
 
 // CloseWaveOutFile closes a wave file opened by the #OpenWaveOutFile function
@@ -285,7 +352,7 @@ func (t *TTS) CloseWaveOutFile() error {
 func (t *TTS) OpenLogFile(outFile string, log Log) error {
 	outFileC := C.CString(outFile)
 	defer C.free(unsafe.Pointer(outFileC))
-	return mmResultToError(C.TextToSpeechOpenLogFile(t.handle, outFileC, C.ulong(log)))
+	return mmResultToError(C.TextToSpeechOpenLogFile(t.handle, outFileC, C.DWORD(log)))
 }
 
 // CloseLogFile closes a log file opened by #OpenLogFile and returns to the
@@ -320,7 +387,7 @@ func (t *TTS) CloseLogFile() error {
 func (t *TTS) Speak(text string, flags TTSFlags) error {
 	textC := C.CString(text)
 	defer C.free(unsafe.Pointer(textC))
-	return mmResultToError(C.TextToSpeechSpeak(t.handle, textC, C.ulong(flags)))
+	return mmResultToError(C.TextToSpeechSpeak(t.handle, textC, C.DWORD(flags)))
 }
 
 // StartLang checks whether the specified language is installed and, if so,
