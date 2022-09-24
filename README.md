@@ -8,6 +8,10 @@ This library opens the gate for using DECtalk's DAPI to generate speech from any
 given text. This means you can now fully automate this text-to-speech engine
 straight from Go code.
 
+You can fully use DECtalk's TTS engine including inline commands such as
+modifying speed, pitch, inserting DTMF sounds, phonemes etc. through this
+library!
+
 ## Requirements
 
 In order to use this library you need a fully working copy of the DECtalk DAPI
@@ -24,6 +28,34 @@ ship with binaries for that) you can rely on [MinGW-w64](https://www.mingw-w64.o
 ```bash
 export CGO_ENABLED=1 GOARCH=386 CC=i686-w64-mingw32-gcc
 ```
+
+## Features
+
+### Implemented features
+
+- Support for Windows and Linux
+- Full support for inline commands as-is
+- Audio output to sound device
+- Audio output to WAV file
+- Manipulation of speech rate through API call
+- Log output for text, phonemes, syllables
+- Fast-pace single-letter speech output
+- Multi-language support
+- Wrapping of native error codes to Go error objects
+- Simple version querying
+
+### Currently missing features
+
+- Audio output to memory buffer
+- Speaker switching through API call
+- Callback functionality
+- Manipulation of speaker through API call
+- Additional Go-side checks for bad code conditions such as those known to lead
+  to deadlocks
+- Engine status querying
+- Features querying
+- Engine capabilities querying
+- Version querying to a struct
 
 ## Building
 

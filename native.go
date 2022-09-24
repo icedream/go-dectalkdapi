@@ -537,7 +537,6 @@ func (t *TTS) SetRate(rate uint32) error {
 // TODO - DWORD #EnumLangs(LPLANG_ENUM *langs) retrieves information about what languages are available in the system.
 // TODO - MMRESULT #GetCaps(LPTTS_CAPS_T lpTTScaps) Retrieves the capabilities of the text-to-speech system
 // TODO - DWORD #GetFeatures(void) Retrieves information, in the form of a bitmask, about the features of DECtalk Software. (maskable to the list supplied in the header file TTSFEAT.H.)
-// TODO - MMRESULT #GetLanguage Returns the language in use. (not supported)
 // TODO - MMRESULT #GetRate(LPTTS_HANDLE_T phTTS, LPDWORD pdwRate) Returns the speaking rate of the text-to-speech system.
 // TODO - MMRESULT #GetSpeaker(LPTTS_HANDLE_T phTTS, LPSPEAKER_T lpSpeaker) Returns the last speaking voice to have spoken.
 // TODO - MMRESULT #GetStatus(LPTTS_HANDLE_T phTTS, LPDWORD dwIdentifier[ ], LPDWORD dwStatus[ ], DWORD dwNumberOfStatusValues) Gets the status of the text-to-speech system
