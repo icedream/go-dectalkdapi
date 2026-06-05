@@ -566,6 +566,25 @@ type TTSBuffer struct {
 	buf *C.TTS_BUFFER_TAG
 }
 
+// Data returns the audio data from the buffer as a Go byte slice.
+func (b *TTSBuffer) Data() ([]byte, error) {
+	if b == nil || b.buf == nil || b.buf.lpData == nil {
+		return nil, errors.New("buffer is nil")
+	}
+
+	// Get the data pointer and length
+	dataPtr := unsafe.Pointer(b.buf.lpData)
+	dataLen := uint32(b.buf.dwBufferLength)
+
+	if dataLen == 0 {
+		return nil, errors.New("buffer has no data")
+	}
+
+	// Convert C string to Go byte slice
+	data := unsafe.Slice((*byte)(dataPtr), int(dataLen))
+	return data, nil
+}
+
 // TTSBufferTag is the C struct for text-to-speech buffer information.
 type TTSBufferTag C.TTS_BUFFER_TAG
 
@@ -595,6 +614,54 @@ func (t *TTS) OpenInMemory(format WaveFormat) error {
 // to its startup state.
 func (t *TTS) CloseInMemory() error {
 	return mmResultToError(C.TextToSpeechCloseInMemory(t.handle))
+}
+
+// BufferLength returns the length of the audio data in the buffer.
+func (b *TTSBuffer) BufferLength() uint32 {
+	if b == nil || b.buf == nil {
+		return 0
+	}
+	return uint32(b.buf.dwBufferLength)
+}
+
+// PhonemeCount returns the number of phoneme changes in the buffer.
+func (b *TTSBuffer) PhonemeCount() uint32 {
+	if b == nil || b.buf == nil {
+		return 0
+	}
+	return uint32(b.buf.dwNumberOfPhonemeChanges)
+}
+
+// IndexMarkCount returns the number of index marks in the buffer.
+func (b *TTSBuffer) IndexMarkCount() uint32 {
+	if b == nil || b.buf == nil {
+		return 0
+	}
+	return uint32(b.buf.dwNumberOfIndexMarks)
+}
+
+// MaximumBufferLength returns the maximum buffer length.
+func (b *TTSBuffer) MaximumBufferLength() uint32 {
+	if b == nil || b.buf == nil {
+		return 0
+	}
+	return uint32(b.buf.dwMaximumBufferLength)
+}
+
+// MaximumPhonemeChanges returns the maximum number of phoneme changes.
+func (b *TTSBuffer) MaximumPhonemeChanges() uint32 {
+	if b == nil || b.buf == nil {
+		return 0
+	}
+	return uint32(b.buf.dwMaximumNumberOfPhonemeChanges)
+}
+
+// MaximumIndexMarks returns the maximum number of index marks.
+func (b *TTSBuffer) MaximumIndexMarks() uint32 {
+	if b == nil || b.buf == nil {
+		return 0
+	}
+	return uint32(b.buf.dwMaximumNumberOfIndexMarks)
 }
 
 // TODO - DWORD #EnumLangs(LPLANG_ENUM *langs) retrieves information about what languages are available in the system.
