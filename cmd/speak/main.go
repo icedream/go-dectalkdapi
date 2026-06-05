@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"log"
 	"os"
 
@@ -21,24 +22,66 @@ func main() {
 	must(err)
 	defer must(tts.Shutdown())
 
-	must(tts.OpenWaveOutFile("test.wav",
-		dectalkdapi.WaveFormat1M16))
-	defer must(tts.CloseWaveOutFile())
+	// TODO - renderInMemory(tts)
+	_ = renderInMemory
+	renderToWAV(tts)
+}
 
-	defer must(tts.Sync())
+func renderInMemory(tts *dectalkdapi.TTS) (err error) {
+	if err = tts.OpenInMemory(dectalkdapi.WaveFormat1M16); err != nil {
+		return err
+	}
+	defer func() {
+		err = errors.Join(err, tts.CloseInMemory())
+	}()
 
-	must(tts.Speak(
+	buffer, err := tts.ReturnBuffer()
+	must(err)
+
+	_ = buffer // TODO
+
+	err = speakExample(tts)
+	return
+}
+
+func renderToWAV(tts *dectalkdapi.TTS) (err error) {
+	if err = tts.OpenWaveOutFile("test.wav",
+		dectalkdapi.WaveFormat1M16); err != nil {
+		return err
+	}
+	defer func() {
+		err = errors.Join(err, tts.CloseWaveOutFile())
+	}()
+
+	err = speakExample(tts)
+	return
+}
+
+func speakExample(tts *dectalkdapi.TTS) (err error) {
+	defer func() {
+		err = errors.Join(err, tts.Sync())
+	}()
+
+	if err = tts.Speak(
 		`[:PHONE ON]`,
-		dectalkdapi.Normal))
+		dectalkdapi.Normal); err != nil {
+		return err
+	}
 
-	must(tts.Speak(
+	if err = tts.Speak(
 		`[dah<600,20>][dah<600,20>][dah<600,20>]`+
 			`[dah<500,16>][dah<130,23>][dah<600,20>]`+
 			`[dah<500,16>][dah<130,23>][dah<600,20>]`,
-		dectalkdapi.Force))
+		dectalkdapi.Force); err != nil {
+		return err
+	}
 
-	must(tts.Speak(
+	if err = tts.Speak(
 		`Congratulations, you can now synthesize any text `+
 			`the same way Moonbase Alpha did! aeiou`,
-		dectalkdapi.Force))
+		dectalkdapi.Force); err != nil {
+		return err
+	}
+
+	return
 }
