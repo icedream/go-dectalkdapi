@@ -19,13 +19,13 @@ func main() {
 		dectalkdapi.DoNotUseAudioDevice |
 			dectalkdapi.ReportOpenError)
 	must(err)
-	defer tts.Shutdown()
+	defer must(tts.Shutdown())
 
 	must(tts.OpenWaveOutFile("test.wav",
 		dectalkdapi.WaveFormat1M16))
-	defer tts.CloseWaveOutFile()
+	defer must(tts.CloseWaveOutFile())
 
-	defer tts.Sync()
+	defer must(tts.Sync())
 
 	must(tts.Speak(
 		`[:PHONE ON]`,
