@@ -33,6 +33,10 @@ jobs:
           make -j$(nproc)
           make "DESTDIR=$GITHUB_WORKSPACE/dectalk" install
 
+      - name: Set up dictionary files
+        run: |
+          ln -vs "$GITHUB_WORKSPACE/dectalk/opt/dectalk/dic" dic
+
       - name: Set up Go
         uses: actions/setup-go@v6
         with:
@@ -40,6 +44,7 @@ jobs:
 
       - name: Download go dependencies
         run: go mod download
+
 
       - name: Run tests
         run: |
