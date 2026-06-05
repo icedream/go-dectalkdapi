@@ -1,0 +1,76 @@
+name: Test
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - 'v*'
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+env:
+  GOLANGCI_LINT_VERSION: v2.12.2
+  CGO_LDFLAGS: "-L${{ github.workspace }}/dectalk/opt/dectalk/lib"
+  CGO_CFLAGS: "-I${{ github.workspace }}/dectalk/opt/dectalk/include"
+  LD_LIBRARY_PATH: "${{ github.workspace }}/dectalk/opt/dectalk/lib"
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install DECtalk dependency
+        run: |
+          git clone https://github.com/dectalk/dectalk.git
+          cd dectalk/src
+          ./autogen.sh
+          ./configure
+          make -j$(nproc)
+          make "DESTDIR=$GITHUB_WORKSPACE/dectalk" install
+
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          go-version-file: 'go.mod'
+
+      - name: Download go dependencies
+        run: go mod download
+
+      - name: Run tests
+        run: |
+          go test -v ./...
+
+      - name: Run linter
+        uses: golangci/golangci-lint-action@v9
+        with:
+          version: ${{ env.GOLANGCI_LINT_VERSION }}
+
+      - name: Test with coverage
+        run: |
+          go test -cover -coverprofile=coverage.txt ./...
+
+      - name: Archive code coverage results
+        uses: actions/upload-artifact@v7
+        with:
+          name: code-coverage
+          path: coverage.txt
+
+  code_coverage:
+    name: "Code coverage report"
+    if: github.event_name == 'pull_request' # Do not run when workflow is triggered by push to main branch
+    runs-on: ubuntu-latest
+    needs: test
+    permissions:
+      contents:      read
+      actions:       read  # to download code coverage results from "test" job
+      pull-requests: write # write permission needed to comment on PR
+    steps:
+      - uses: fgrosse/go-coverage-report@v1.3.0 # Consider using a Git revision for maximum security
+        with:
+          coverage-artifact-name: "code-coverage" # can be omitted if you used this default value
+          coverage-file-name: "coverage.txt" # can be omitted if you used this default value
