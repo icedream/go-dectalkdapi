@@ -107,7 +107,7 @@ const (
 
 	// No audio driver available.
 	//
-	// Will not occur with #DoNotUseAudioDevice.
+	// Will not occur with [DoNotUseAudioDevice].
 	NoDriver = C.MMSYSERR_NODRIVER
 
 	// DECtalk dictionary not found.
@@ -241,7 +241,7 @@ func (l *TTSLanguage) Name() string {
 // Close closes an instance for an installed language and attempts to unload it
 // from the DECtalk Multi-Language (ML) engine.
 //
-// Returns TRUE when a language is successfully unloaded, or FALSE when the
+// Returns true when a language is successfully unloaded, or false when the
 // operation cannot be completed or more instances have the thread started.
 func (l *TTSLanguage) Close() bool {
 	return parseIntAsBool(C.TextToSpeechCloseLang(l.name))
@@ -311,24 +311,24 @@ func (t *TTS) LoadUserDictionary(dictFile string) error {
 
 // OpenWaveOutFile opens the specified wave file and causes the text-to-speech
 // system to enter into wave-file mode. This mode indicates that the speech
-// samples are to be written in wave format into the wave file each time #Speak
-// is called. The text-to-speech system remains in the wave-file mode until
-// #CloseWaveOutFile is called.
+// samples are to be written in wave format into the wave file each time
+// [TTS.Speak] is called. The text-to-speech system remains in the wave-file
+// mode until [TTS.CloseWaveOutFile] is called.
 //
 // This function automatically resumes audio output if the text-to-speech system
-// is in a paused state by a previously issued #Pause call.
+// is in a paused state by a previously issued [TTS.Pause] call.
 func (t *TTS) OpenWaveOutFile(outFile string, format WaveFormat) error {
 	outFileC := C.CString(outFile)
 	defer C.free(unsafe.Pointer(outFileC))
 	return mmResultToError(C.TextToSpeechOpenWaveOutFile(t.handle, outFileC, C.DWORD(format)))
 }
 
-// CloseWaveOutFile closes a wave file opened by the #OpenWaveOutFile function
-// and returns to the startup state. The speech samples are then ignored or sent
-// to an audio device, depending on the setting of the deviceOptions parameter
-// in the startup function.
+// CloseWaveOutFile closes a wave file opened by the [TTS.OpenWaveOutFile]
+// function and returns to the startup state. The speech samples are then
+// ignored or sent to an audio device, depending on the setting of the
+// deviceOptions parameter in the startup function.
 //
-// The application must have called #OpenWaveOutFile before calling
+// The application must have called [TTS.OpenWaveOutFile] before calling
 // CloseWaveOutFile.
 func (t *TTS) CloseWaveOutFile() error {
 	return mmResultToError(C.TextToSpeechCloseWaveOutFile(t.handle))
@@ -337,9 +337,9 @@ func (t *TTS) CloseWaveOutFile() error {
 // OpenLogFile opens the specified log file and causes the text-to-speech system
 // to enter into the log-file mode. This mode indicates that the speech samples
 // are to be written as text, phonemes, or syllables into the log file each time
-// #Speak is called. The phonemes and syllables are written using the arpabet
-// alphabet. The text-to-speech system remains in the log-file mode until
-// #CloseLogFile is called.
+// [TTS.Speak] is called. The phonemes and syllables are written using the
+// arpabet alphabet. The text-to-speech system remains in the log-file mode
+// until [TTS.CloseLogFile] is called.
 //
 // If more than one of the dwFlags are passed, the logged output is mixed in an
 // unpredictable fashion.
@@ -348,14 +348,14 @@ func (t *TTS) CloseWaveOutFile() error {
 // voice-control command also has no effect when a log file is open already.
 //
 // OpenLogFile automatically resumes audio output if the text-to-speech system
-// is in a paused state by a previously issued #Pause call.
+// is in a paused state by a previously issued [TTS.Pause] call.
 func (t *TTS) OpenLogFile(outFile string, log Log) error {
 	outFileC := C.CString(outFile)
 	defer C.free(unsafe.Pointer(outFileC))
 	return mmResultToError(C.TextToSpeechOpenLogFile(t.handle, outFileC, C.DWORD(log)))
 }
 
-// CloseLogFile closes a log file opened by #OpenLogFile and returns to the
+// CloseLogFile closes a log file opened by [TTS.OpenLogFile] and returns to the
 // startup state. The speech samples are then ignored or sent to an audio
 // device, depending on the setting of the deviceOptions parameter in the
 // startup function.
@@ -363,7 +363,8 @@ func (t *TTS) OpenLogFile(outFile string, log Log) error {
 // CloseLogFile closes any open log file, even if it was opened with the Log
 // command.
 //
-// The application must have called #OpenLogFile before calling CloseLogFile.
+// The application must have called [TTS.OpenLogFile] before calling
+// CloseLogFile.
 func (t *TTS) CloseLogFile() error {
 	return mmResultToError(C.TextToSpeechCloseLogFile(t.handle))
 }
@@ -372,7 +373,7 @@ func (t *TTS) CloseLogFile() error {
 //
 // While the text-to-speech system is in the startup state, speech samples are
 // routed to the audio device or ignored, depending on whether the startup
-// function flag DO_NOT_USE_AUDIO_DEVICE is clear or set in the dwDeviceOptions
+// function flag [DoNotUseAudioDevice] is clear or set in the deviceOptions
 // parameter of the startup function.
 //
 // If the text-to-speech system is in a special mode (wave-file, log-file, or
@@ -381,9 +382,9 @@ func (t *TTS) CloseLogFile() error {
 // The speaker, speaking rate, and volume also can be changed in the text string
 // by inserting voice- control commands, as shown in the following example:
 //
-// [:name paul] I am Paul. [:nb] I am Betty. [:volume set 50] The volume has
-// been set to 50% of the maximum level. [:rate 120] I am speaking at 120 words
-// per minute.
+//	[:name paul] I am Paul. [:nb] I am Betty. [:volume set 50] The volume has
+//	been set to 50% of the maximum level. [:rate 120] I am speaking at 120 words
+//	per minute.
 func (t *TTS) Speak(text string, flags TTSFlags) error {
 	textC := C.CString(text)
 	defer C.free(unsafe.Pointer(textC))
@@ -425,14 +426,14 @@ func SelectLang(lang *TTSLanguage) (ok bool) {
 // Sync blocks until all previously queued text is processed.
 //
 // This function automatically resumes audio output if the text-to-speech system
-// is in a paused state by a previously issued #Pause call.
+// is in a paused state by a previously issued [Pause] call.
 func (t *TTS) Sync() error {
 	return mmResultToError(C.TextToSpeechSync(t.handle))
 }
 
 // Typing speaks a single letter as quickly as possible, aborting any previously
-// queued speech. This is somewhat slower if #Speak has been called since the
-// last Typing or #Reset call.
+// queued speech. This is somewhat slower if [Speak] has been called since the
+// last Typing or [Reset] call.
 //
 // This function is primarily useful with the Access32 versions of DECtalk
 // Software. The function exists in non-Access32 versions, but is not fast.
@@ -461,22 +462,23 @@ func (t *TTS) Shutdown() error {
 // log files or wave files, or when using the speech-to-memory capability of the
 // text-to-speech system.
 //
-// If the text-to-speech system owns the audio device (that is, #OwnAudioDevice
-// was specified in the startup function), then the text-to-speech system
-// remains paused until #Resume, #Sync, #OpenInMemory, #OpenLogFile, or
-// #OpenWaveOutFile is called.
+// If the text-to-speech system owns the audio device (that is,
+// [TTS.OwnAudioDevice] was specified in the startup function), then the
+// text-to-speech system remains paused until [TTS.Resume], [TTS.Sync],
+// [TTS.OpenInMemory], [TTS.OpenLogFile], or [TTS.OpenWaveOutFile] is called.
 //
-// If the text-to-speech system does not own the audio device (#OwnAudioDevice
-// was NOT specified in the startup function) and #Pause is called while the
-// system is speaking, the text-to-speech system remains paused until the system
-// has completed speaking.
+// If the text-to-speech system does not own the audio device
+// ([TTS.OwnAudioDevice] was NOT specified in the startup function) and
+// [TTS.Pause] is called while the system is speaking, the text-to-speech system
+// remains paused until the system has completed speaking.
 //
-// In this case, the wave output device is released when #Reset is called. It
-// will also be released if #Sync, #OpenInMemory, #OpenLogFile, or
-// #OpenWaveOutFile is called AND the system has completed speaking.
+// In this case, the wave output device is released when [TTS.Reset] is called.
+// It will also be released if [TTS.Sync], [TTS.OpenInMemory],
+// [TTS.OpenLogFile], or [TTS.OpenWaveOutFile] is called AND the system has
+// completed speaking.
 //
-// Note that #Pause will NOT resume audio output if the text-to-speech system is
-// paused by #Pause.
+// Note that [TTS.Pause] will NOT resume audio output if the text-to-speech
+// system is paused by [TTS.Pause].
 func (t *TTS) Pause() error {
 	return mmResultToError(C.TextToSpeechPause(t.handle))
 }
@@ -493,15 +495,16 @@ func (t *TTS) Resume() error {
 // Reset flushes all previously queued text from the text-to-speech system and
 // stops any audio output.
 //
-// If the #OpenInMemory function has enabled writing speech samples to memory,
-// all queued memory buffers are returned to the calling application.
+// If the [TTS.OpenInMemory] function has enabled writing speech samples to
+// memory, all queued memory buffers are returned to the calling application.
 //
 // If the fullReset flag is on and the text-to-speech system is in one of its
 // special modes (log-file, wave-file, or speech-to-memory mode), all files are
 // closed and the text-to-speech system is returned to the startup state.
 //
-// #Reset should be called before calling #CloseInMemory. Failing to do this in
-// a situation where the synthesizer is busy may result in a deadlock.
+// [TTS.Reset] should be called before calling [TTS.CloseInMemory]. Failing to
+// do this in a situation where the synthesizer is busy may result in a
+// deadlock.
 func (t *TTS) Reset(fullReset bool) error {
 	// TODO - implement deadlock checks (CloseInMemory called before Reset?)
 
@@ -514,8 +517,8 @@ func (t *TTS) Reset(fullReset bool) error {
 //
 // The current setting of the speaking rate is returned even if the speaking
 // rate change has not yet occurred. This may occur when the #SetRate function
-// is used without the #Sync function. The speaking-rate change occurs on clause
-// boundaries.
+// is used without the [TTS.Sync] function. The speaking-rate change occurs on
+// clause boundaries.
 func (t *TTS) GetRate() (uint32, error) {
 	var rateC C.DWORD
 	if err := mmResultToError(C.TextToSpeechGetRate(t.handle, &rateC)); err != nil {
@@ -562,7 +565,7 @@ func (t *TTS) SetSpeaker(speaker Speaker) error {
 // TODO - DWORD #GetFeatures(void) Retrieves information, in the form of a bitmask, about the features of DECtalk Software. (maskable to the list supplied in the header file TTSFEAT.H.)
 // TODO - MMRESULT #GetRate(LPTTS_HANDLE_T phTTS, LPDWORD pdwRate) Returns the speaking rate of the text-to-speech system.
 // TODO - MMRESULT #GetStatus(LPTTS_HANDLE_T phTTS, LPDWORD dwIdentifier[ ], LPDWORD dwStatus[ ], DWORD dwNumberOfStatusValues) Gets the status of the text-to-speech system
-// TODO - MMRESULT #OpenInMemory(LPTTS_HANDLE_T phTTS, DWORD dwFormat) <requires TextToSpeechAddBuffer> Produces buffered speech samples in wave format whenever #Speak function is called. The calling application is notified when memory buffer is filled.
+// TODO - MMRESULT #OpenInMemory(LPTTS_HANDLE_T phTTS, DWORD dwFormat) <requires TextToSpeechAddBuffer> Produces buffered speech samples in wave format whenever [Speak] function is called. The calling application is notified when memory buffer is filled.
 // TODO - MMRESULT #ReturnBuffer(LPTTS_HANDLE_T phTTS, LPTTS_BUFFER_T *ppTTSbuffer) Returns the current shared-memory buffer.
 // TODO - MMRESULT #StartupEx(LPTTS_HANDLE_T *phTTS, UINT uiDeviceNumber, DWORD dwDeviceOptions, VOID (*DtCallbackRoutine)(), LONG dwCallbackParameter) TextToSpeechStartup but with custom callback
 // TODO - ULONG TextToSpeechVersionEx(LPVERSION_INFO *ver)
