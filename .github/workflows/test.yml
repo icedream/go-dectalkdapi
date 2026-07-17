@@ -45,6 +45,17 @@ jobs:
           echo "=== DECtalk.conf contents ==="
           cat DECtalk.conf
 
+      - name: Verify DECtalk configuration
+        run: |
+          echo "=== DECtalk.conf contents ==="
+          cat DECtalk.conf
+          echo "=== Current working directory ==="
+          pwd
+          echo "=== Directory listing ==="
+          ls -la
+          echo "=== Dictionary directory listing ==="
+          ls -la dic/
+
       - name: Set up Go
         uses: actions/setup-go@v6
         with:
