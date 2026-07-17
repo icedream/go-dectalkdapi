@@ -22,6 +22,9 @@ const HWND ZeroHWND = NULL;
 // define constants that cgo can't use
 #define WAVERR_BADFORMAT 32
 
+// define structs that cgo can't use
+typedef struct TTS_BUFFER_TAG TTS_BUFFER_TAG;
+
 // define structs that don't exist on linux
 typedef uint HWND;
 const HWND ZeroHWND = 0;
@@ -558,15 +561,113 @@ func (t *TTS) SetSpeaker(speaker Speaker) error {
 	return mmResultToError(C.TextToSpeechSetSpeaker(t.handle, C.SPEAKER_T(speaker)))
 }
 
-// TODO - MMRESULT #AddBuffer(LPTTS_HANDLE_T phTTS, LPTTS_BUFFER_T pTTSbuffer) Adds a shared-memory buffer allocated by the calling application to the memory buffer list.
-// TODO - MMRESULT #CloseInMemory(LPTTS_HANDLE_T phTTS) Returns the text-to-speech system to its startup state.
+// TTSBuffer represents a shared-memory buffer for audio output.
+type TTSBuffer struct {
+	buf *C.TTS_BUFFER_TAG
+}
+
+// Data returns the audio data from the buffer as a Go byte slice.
+func (b *TTSBuffer) Data() ([]byte, error) {
+	if b == nil || b.buf == nil || b.buf.lpData == nil {
+		return nil, errors.New("buffer is nil")
+	}
+
+	// Get the data pointer and length
+	dataPtr := unsafe.Pointer(b.buf.lpData)
+	dataLen := uint32(b.buf.dwBufferLength)
+
+	if dataLen == 0 {
+		return nil, errors.New("buffer has no data")
+	}
+
+	// Convert C string to Go byte slice
+	data := unsafe.Slice((*byte)(dataPtr), int(dataLen))
+	return data, nil
+}
+
+// TTSBufferTag is the C struct for text-to-speech buffer information.
+type TTSBufferTag C.TTS_BUFFER_TAG
+
+// AddBuffer adds a shared-memory buffer allocated by the calling application
+// to the memory buffer list.
+func (t *TTS) AddBuffer(buffer *TTSBuffer) error {
+	return mmResultToError(C.TextToSpeechAddBuffer(t.handle, buffer.buf))
+}
+
+// ReturnBuffer returns the current shared-memory buffer to the calling
+// application.
+func (t *TTS) ReturnBuffer() (*TTSBuffer, error) {
+	var bufferPtr C.LPTTS_BUFFER_T
+	if err := mmResultToError(C.TextToSpeechReturnBuffer(t.handle, &bufferPtr)); err != nil {
+		return nil, err
+	}
+	return &TTSBuffer{buf: (*C.TTS_BUFFER_TAG)(bufferPtr)}, nil
+}
+
+// OpenInMemory enables writing speech samples to memory buffer when #Speak is
+// called.
+func (t *TTS) OpenInMemory(format WaveFormat) error {
+	return mmResultToError(C.TextToSpeechOpenInMemory(t.handle, C.DWORD(format)))
+}
+
+// CloseInMemory closes the memory buffer and returns the text-to-speech system
+// to its startup state.
+func (t *TTS) CloseInMemory() error {
+	return mmResultToError(C.TextToSpeechCloseInMemory(t.handle))
+}
+
+// BufferLength returns the length of the audio data in the buffer.
+func (b *TTSBuffer) BufferLength() uint32 {
+	if b == nil || b.buf == nil {
+		return 0
+	}
+	return uint32(b.buf.dwBufferLength)
+}
+
+// PhonemeCount returns the number of phoneme changes in the buffer.
+func (b *TTSBuffer) PhonemeCount() uint32 {
+	if b == nil || b.buf == nil {
+		return 0
+	}
+	return uint32(b.buf.dwNumberOfPhonemeChanges)
+}
+
+// IndexMarkCount returns the number of index marks in the buffer.
+func (b *TTSBuffer) IndexMarkCount() uint32 {
+	if b == nil || b.buf == nil {
+		return 0
+	}
+	return uint32(b.buf.dwNumberOfIndexMarks)
+}
+
+// MaximumBufferLength returns the maximum buffer length.
+func (b *TTSBuffer) MaximumBufferLength() uint32 {
+	if b == nil || b.buf == nil {
+		return 0
+	}
+	return uint32(b.buf.dwMaximumBufferLength)
+}
+
+// MaximumPhonemeChanges returns the maximum number of phoneme changes.
+func (b *TTSBuffer) MaximumPhonemeChanges() uint32 {
+	if b == nil || b.buf == nil {
+		return 0
+	}
+	return uint32(b.buf.dwMaximumNumberOfPhonemeChanges)
+}
+
+// MaximumIndexMarks returns the maximum number of index marks.
+func (b *TTSBuffer) MaximumIndexMarks() uint32 {
+	if b == nil || b.buf == nil {
+		return 0
+	}
+	return uint32(b.buf.dwMaximumNumberOfIndexMarks)
+}
+
 // TODO - DWORD #EnumLangs(LPLANG_ENUM *langs) retrieves information about what languages are available in the system.
-// TODO - MMRESULT #GetCaps(LPTTS_CAPS_T lpTTScaps) Retrieves the capabilities of the text-to-speech system
 // TODO - DWORD #GetFeatures(void) Retrieves information, in the form of a bitmask, about the features of DECtalk Software. (maskable to the list supplied in the header file TTSFEAT.H.)
 // TODO - MMRESULT #GetRate(LPTTS_HANDLE_T phTTS, LPDWORD pdwRate) Returns the speaking rate of the text-to-speech system.
 // TODO - MMRESULT #GetStatus(LPTTS_HANDLE_T phTTS, LPDWORD dwIdentifier[ ], LPDWORD dwStatus[ ], DWORD dwNumberOfStatusValues) Gets the status of the text-to-speech system
-// TODO - MMRESULT #OpenInMemory(LPTTS_HANDLE_T phTTS, DWORD dwFormat) <requires TextToSpeechAddBuffer> Produces buffered speech samples in wave format whenever [Speak] function is called. The calling application is notified when memory buffer is filled.
-// TODO - MMRESULT #ReturnBuffer(LPTTS_HANDLE_T phTTS, LPTTS_BUFFER_T *ppTTSbuffer) Returns the current shared-memory buffer.
 // TODO - MMRESULT #StartupEx(LPTTS_HANDLE_T *phTTS, UINT uiDeviceNumber, DWORD dwDeviceOptions, VOID (*DtCallbackRoutine)(), LONG dwCallbackParameter) TextToSpeechStartup but with custom callback
 // TODO - ULONG TextToSpeechVersionEx(LPVERSION_INFO *ver)
 // TODO - struct LPVERSION_INFO
