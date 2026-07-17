@@ -36,13 +36,11 @@ jobs:
       - name: Set up dictionary files
         run: |
           ln -vs "$GITHUB_WORKSPACE/dectalk/opt/dectalk/dic" dic
-          cp -v "$GITHUB_WORKSPACE/dectalk/dist/DECtalk.conf" "$GITHUB_WORKSPACE/dectalk/opt/dectalk/DECtalk.conf"
+          cp -v "$GITHUB_WORKSPACE/dectalk/dist/DECtalk.conf" .
           echo "DECtalk.conf contents:"
-          cat "$GITHUB_WORKSPACE/dectalk/opt/dectalk/DECtalk.conf"
+          cat DECtalk.conf
           echo "Dic directory contents:"
-          ls -la "$GITHUB_WORKSPACE/dectalk/opt/dectalk/dic/" | head -10
-          echo "Checking if we can read the US dict directly:"
-          ls -la "$GITHUB_WORKSPACE/dectalk/opt/dectalk/dic/dtalk_us.dic" && echo "FOUND IT!" || echo "NOT FOUND"
+          ls -la dic/ | head -10
 
       - name: Set up Go
         uses: actions/setup-go@v6
@@ -55,8 +53,6 @@ jobs:
 
       - name: Run tests
         run: |
-          # Also copy config to current dir as fallback
-          cp -v "$GITHUB_WORKSPACE/dectalk/opt/dectalk/DECtalk.conf" . || true
           echo "Current directory contents:"
           ls -la
           go test -v ./...
@@ -68,8 +64,8 @@ jobs:
 
       - name: Test with coverage
         run: |
-          # Also copy config to current dir as fallback
-          cp -v "$GITHUB_WORKSPACE/dectalk/opt/dectalk/DECtalk.conf" . || true
+          echo "Current directory contents:"
+          ls -la
           go test -cover -coverprofile=coverage.txt ./...
 
       - name: Archive code coverage results
