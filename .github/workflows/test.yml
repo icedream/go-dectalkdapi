@@ -13,9 +13,9 @@ on:
 
 env:
   GOLANGCI_LINT_VERSION: v2.12.2
-  CGO_LDFLAGS: "-L${{ github.workspace }}/dectalk/opt/dectalk/lib"
-  CGO_CFLAGS: "-I${{ github.workspace }}/dectalk/opt/dectalk/include"
-  LD_LIBRARY_PATH: "${{ github.workspace }}/dectalk/opt/dectalk/lib"
+  CGO_LDFLAGS: "-L/opt/dectalk/lib"
+  CGO_CFLAGS: "-I/opt/dectalk/include"
+  LD_LIBRARY_PATH: "/opt/dectalk/lib"
 
 jobs:
   test:
@@ -33,14 +33,10 @@ jobs:
           make -j$(nproc)
           make "DESTDIR=$GITHUB_WORKSPACE/dectalk" install
 
-      - name: Set up dictionary files
+      - name: Set up symlink for /opt/dectalk
         run: |
-          cp -r "$GITHUB_WORKSPACE/dectalk/opt/dectalk/dic" .
-          cp -v "$GITHUB_WORKSPACE/dectalk/dist/DECtalk.conf" .
-          echo "DECtalk.conf contents:"
-          cat DECtalk.conf
-          echo "Dic directory contents:"
-          ls -la dic/ | head -10
+          rm -rf /opt/dectalk
+          ln -s $GITHUB_WORKSPACE/dectalk/opt/dectalk /opt/dectalk
 
       - name: Set up Go
         uses: actions/setup-go@v6
@@ -50,11 +46,8 @@ jobs:
       - name: Download go dependencies
         run: go mod download
 
-
       - name: Run tests
         run: |
-          echo "Current directory contents:"
-          ls -la
           go test -v ./...
 
       - name: Run linter
@@ -64,8 +57,6 @@ jobs:
 
       - name: Test with coverage
         run: |
-          echo "Current directory contents:"
-          ls -la
           go test -cover -coverprofile=coverage.txt ./...
 
       - name: Archive code coverage results
