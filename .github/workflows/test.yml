@@ -33,21 +33,17 @@ jobs:
           make -j$(nproc)
           make "DESTDIR=$GITHUB_WORKSPACE/dectalk" install
 
-      - name: Set up DECtalk in /opt/dectalk
+      - name: Set up DECtalk in repository root
         run: |
-          rm -rf /opt/dectalk
-          mkdir -p /opt/dectalk
-          cp -r $GITHUB_WORKSPACE/dectalk/opt/dectalk/* /opt/dectalk/
-          echo "=== /opt/dectalk contents ==="
-          ls -la /opt/dectalk/
-          echo "=== /opt/dectalk/include contents ==="
-          ls -la /opt/dectalk/include/
-          echo "=== /opt/dectalk/lib contents ==="
-          ls -la /opt/dectalk/lib/
-          echo "=== /opt/dectalk/dic contents ==="
-          ls -la /opt/dectalk/dic/
+          mkdir -p dic
+          cp -r $GITHUB_WORKSPACE/dectalk/opt/dectalk/dic/* ./dic/
+          cp $GITHUB_WORKSPACE/dectalk/opt/dectalk/DECtalk.conf .
+          echo "=== Current dir contents ==="
+          ls -la
+          echo "=== dic contents ==="
+          ls -la dic/
           echo "=== DECtalk.conf contents ==="
-          cat /opt/dectalk/DECtalk.conf
+          cat DECtalk.conf
 
       - name: Set up Go
         uses: actions/setup-go@v6
