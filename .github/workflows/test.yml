@@ -36,6 +36,11 @@ jobs:
       - name: Set up dictionary files
         run: |
           ln -vs "$GITHUB_WORKSPACE/dectalk/opt/dectalk/dic" dic
+          cp -v "$GITHUB_WORKSPACE/dectalk/dist/DECtalk.conf" "$GITHUB_WORKSPACE/dectalk/opt/dectalk/DECtalk.conf"
+          echo "DECtalk.conf contents:"
+          cat "$GITHUB_WORKSPACE/dectalk/opt/dectalk/DECtalk.conf"
+          echo "Dic directory contents:"
+          ls -la "$GITHUB_WORKSPACE/dectalk/opt/dectalk/dic/" | head -10
 
       - name: Set up Go
         uses: actions/setup-go@v6
