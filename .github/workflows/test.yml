@@ -33,10 +33,11 @@ jobs:
           make -j$(nproc)
           make "DESTDIR=$GITHUB_WORKSPACE/dectalk" install
 
-      - name: Set up symlink for /opt/dectalk
+      - name: Set up DECtalk configuration and dictionaries
         run: |
-          rm -rf /opt/dectalk
-          ln -s $GITHUB_WORKSPACE/dectalk/opt/dectalk /opt/dectalk
+          mkdir -p /opt/dectalk
+          cp $GITHUB_WORKSPACE/dectalk/opt/dectalk/DECtalk.conf /opt/dectalk/
+          cp -r $GITHUB_WORKSPACE/dectalk/opt/dectalk/dic /opt/dectalk/
 
       - name: Set up Go
         uses: actions/setup-go@v6
