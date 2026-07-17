@@ -35,7 +35,7 @@ jobs:
 
       - name: Set up dictionary files
         run: |
-          ln -vs "$GITHUB_WORKSPACE/dectalk/opt/dectalk/dic" dic
+          cp -r "$GITHUB_WORKSPACE/dectalk/opt/dectalk/dic" .
           cp -v "$GITHUB_WORKSPACE/dectalk/dist/DECtalk.conf" .
           echo "DECtalk.conf contents:"
           cat DECtalk.conf
