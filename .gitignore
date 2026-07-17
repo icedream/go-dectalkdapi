@@ -1,2 +1,4 @@
 *.[Ee][Xx][Ee]
 *.wav
+/output.pcm
+/speak
