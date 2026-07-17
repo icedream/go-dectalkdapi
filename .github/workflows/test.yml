@@ -35,6 +35,7 @@ jobs:
 
       - name: Set up DECtalk in /opt/dectalk
         run: |
+          rm -rf /opt/dectalk
           mkdir -p /opt/dectalk
           cp -r $GITHUB_WORKSPACE/dectalk/opt/dectalk/* /opt/dectalk/
           echo "=== /opt/dectalk contents ==="
@@ -43,6 +44,8 @@ jobs:
           ls -la /opt/dectalk/include/
           echo "=== /opt/dectalk/lib contents ==="
           ls -la /opt/dectalk/lib/
+          echo "=== /opt/dectalk/dic contents ==="
+          ls -la /opt/dectalk/dic/
           echo "=== DECtalk.conf contents ==="
           cat /opt/dectalk/DECtalk.conf
 
