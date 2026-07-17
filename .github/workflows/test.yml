@@ -38,6 +38,8 @@ jobs:
           mkdir -p /opt/dectalk
           cp $GITHUB_WORKSPACE/dectalk/opt/dectalk/DECtalk.conf /opt/dectalk/
           cp -r $GITHUB_WORKSPACE/dectalk/opt/dectalk/dic /opt/dectalk/
+          cp -r $GITHUB_WORKSPACE/dectalk/opt/dectalk/include /opt/dectalk/
+          cp -r $GITHUB_WORKSPACE/dectalk/opt/dectalk/lib /opt/dectalk/
 
       - name: Set up Go
         uses: actions/setup-go@v6
