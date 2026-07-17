@@ -33,13 +33,18 @@ jobs:
           make -j$(nproc)
           make "DESTDIR=$GITHUB_WORKSPACE/dectalk" install
 
-      - name: Set up DECtalk configuration and dictionaries
+      - name: Set up DECtalk in current directory for relative paths
         run: |
-          mkdir -p /opt/dectalk
-          cp $GITHUB_WORKSPACE/dectalk/opt/dectalk/DECtalk.conf /opt/dectalk/
-          cp -r $GITHUB_WORKSPACE/dectalk/opt/dectalk/dic /opt/dectalk/
-          cp -r $GITHUB_WORKSPACE/dectalk/opt/dectalk/include /opt/dectalk/
-          cp -r $GITHUB_WORKSPACE/dectalk/opt/dectalk/lib /opt/dectalk/
+          ls -la
+          mkdir -p dic
+          cp -r $GITHUB_WORKSPACE/dectalk/opt/dectalk/dic/* dic/
+          cp $GITHUB_WORKSPACE/dectalk/dist/DECtalk.conf .
+          echo "=== Current directory contents ==="
+          ls -la
+          echo "=== DECtalk.conf contents ==="
+          cat DECtalk.conf
+          echo "=== Dic directory contents ==="
+          ls -la dic/
 
       - name: Set up Go
         uses: actions/setup-go@v6
@@ -51,6 +56,8 @@ jobs:
 
       - name: Run tests
         run: |
+          echo "=== Current directory contents before test ==="
+          ls -la
           go test -v ./...
 
       - name: Run linter
@@ -60,6 +67,8 @@ jobs:
 
       - name: Test with coverage
         run: |
+          echo "=== Current directory contents before coverage test ==="
+          ls -la
           go test -cover -coverprofile=coverage.txt ./...
 
       - name: Archive code coverage results
