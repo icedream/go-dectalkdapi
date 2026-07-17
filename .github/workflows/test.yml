@@ -13,9 +13,9 @@ on:
 
 env:
   GOLANGCI_LINT_VERSION: v2.12.2
-  CGO_LDFLAGS: "-L${{ github.workspace }}/dectalk/opt/dectalk/lib"
-  CGO_CFLAGS: "-I${{ github.workspace }}/dectalk/opt/dectalk/include"
-  LD_LIBRARY_PATH: "${{ github.workspace }}/dectalk/opt/dectalk/lib"
+  CGO_LDFLAGS: "-L/opt/dectalk/lib"
+  CGO_CFLAGS: "-I/opt/dectalk/include"
+  LD_LIBRARY_PATH: "/opt/dectalk/lib"
 
 jobs:
   test:
@@ -33,9 +33,28 @@ jobs:
           make -j$(nproc)
           make "DESTDIR=$GITHUB_WORKSPACE/dectalk" install
 
-      - name: Set up dictionary files
+      - name: Set up DECtalk in repository root
         run: |
-          ln -vs "$GITHUB_WORKSPACE/dectalk/opt/dectalk/dic" dic
+          mkdir -p dic
+          cp -r $GITHUB_WORKSPACE/dectalk/opt/dectalk/dic/* ./dic/
+          cp $GITHUB_WORKSPACE/dectalk/opt/dectalk/DECtalk.conf .
+          echo "=== Current dir contents ==="
+          ls -la
+          echo "=== dic contents ==="
+          ls -la dic/
+          echo "=== DECtalk.conf contents ==="
+          cat DECtalk.conf
+
+      - name: Verify DECtalk configuration
+        run: |
+          echo "=== DECtalk.conf contents ==="
+          cat DECtalk.conf
+          echo "=== Current working directory ==="
+          pwd
+          echo "=== Directory listing ==="
+          ls -la
+          echo "=== Dictionary directory listing ==="
+          ls -la dic/
 
       - name: Set up Go
         uses: actions/setup-go@v6
@@ -44,7 +63,6 @@ jobs:
 
       - name: Download go dependencies
         run: go mod download
-
 
       - name: Run tests
         run: |
