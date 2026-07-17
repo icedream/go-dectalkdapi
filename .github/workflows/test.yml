@@ -35,9 +35,7 @@ jobs:
 
       - name: Set up DECtalk in current directory for relative paths
         run: |
-          ls -la
-          mkdir -p dic
-          cp -r $GITHUB_WORKSPACE/dectalk/opt/dectalk/dic/* dic/
+          cp -r $GITHUB_WORKSPACE/dectalk/opt/dectalk/dic .
           cp $GITHUB_WORKSPACE/dectalk/dist/DECtalk.conf .
           echo "=== Current directory contents ==="
           ls -la
