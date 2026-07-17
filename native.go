@@ -22,6 +22,12 @@ const HWND ZeroHWND = NULL;
 // define constants that cgo can't use
 #define WAVERR_BADFORMAT 32
 
+// define constants for GetStatus
+#define INPUT_CHARACTER_COUNT 0
+
+// define pointer types for C functions
+typedef VERSION_INFO* LPVERSION_INFO;
+
 // define structs that don't exist on linux
 typedef uint HWND;
 const HWND ZeroHWND = 0;
@@ -249,6 +255,16 @@ func (l *TTSLanguage) Close() bool {
 
 type TTS struct {
 	handle C.LPTTS_HANDLE_T
+}
+
+// TTS_CAPS contains capabilities information.
+type TTS_CAPS struct {
+	NumberOfLanguages      uint32
+	SampleRate             uint32
+	MinimumSpeakingRate    uint32
+	MaximumSpeakingRate    uint32
+	NumberOfPredefinedSpeakers uint32
+	Version                 uint32
 }
 
 // TODO - Add indicator to TTS for whether the engine is still active and check
@@ -558,15 +574,145 @@ func (t *TTS) SetSpeaker(speaker Speaker) error {
 	return mmResultToError(C.TextToSpeechSetSpeaker(t.handle, C.SPEAKER_T(speaker)))
 }
 
-// TODO - MMRESULT #AddBuffer(LPTTS_HANDLE_T phTTS, LPTTS_BUFFER_T pTTSbuffer) Adds a shared-memory buffer allocated by the calling application to the memory buffer list.
-// TODO - MMRESULT #CloseInMemory(LPTTS_HANDLE_T phTTS) Returns the text-to-speech system to its startup state.
-// TODO - DWORD #EnumLangs(LPLANG_ENUM *langs) retrieves information about what languages are available in the system.
-// TODO - MMRESULT #GetCaps(LPTTS_CAPS_T lpTTScaps) Retrieves the capabilities of the text-to-speech system
-// TODO - DWORD #GetFeatures(void) Retrieves information, in the form of a bitmask, about the features of DECtalk Software. (maskable to the list supplied in the header file TTSFEAT.H.)
-// TODO - MMRESULT #GetRate(LPTTS_HANDLE_T phTTS, LPDWORD pdwRate) Returns the speaking rate of the text-to-speech system.
-// TODO - MMRESULT #GetStatus(LPTTS_HANDLE_T phTTS, LPDWORD dwIdentifier[ ], LPDWORD dwStatus[ ], DWORD dwNumberOfStatusValues) Gets the status of the text-to-speech system
-// TODO - MMRESULT #OpenInMemory(LPTTS_HANDLE_T phTTS, DWORD dwFormat) <requires TextToSpeechAddBuffer> Produces buffered speech samples in wave format whenever [Speak] function is called. The calling application is notified when memory buffer is filled.
-// TODO - MMRESULT #ReturnBuffer(LPTTS_HANDLE_T phTTS, LPTTS_BUFFER_T *ppTTSbuffer) Returns the current shared-memory buffer.
-// TODO - MMRESULT #StartupEx(LPTTS_HANDLE_T *phTTS, UINT uiDeviceNumber, DWORD dwDeviceOptions, VOID (*DtCallbackRoutine)(), LONG dwCallbackParameter) TextToSpeechStartup but with custom callback
-// TODO - ULONG TextToSpeechVersionEx(LPVERSION_INFO *ver)
-// TODO - struct LPVERSION_INFO
+func (t *TTS) GetCaps() (*TTS_CAPS, error) {
+	var caps C.TTS_CAPS_T
+	if C.TextToSpeechGetCaps(&caps) != 0 {
+		return nil, errors.New("TextToSpeechGetCaps failed")
+	}
+	return &TTS_CAPS{
+		NumberOfLanguages:      uint32(caps.dwNumberOfLanguages),
+		SampleRate:             uint32(caps.dwSampleRate),
+		MinimumSpeakingRate:    uint32(caps.dwMinimumSpeakingRate),
+		MaximumSpeakingRate:    uint32(caps.dwMaximumSpeakingRate),
+		NumberOfPredefinedSpeakers: uint32(caps.dwNumberOfPredefinedSpeakers),
+		Version:                 uint32(caps.Version),
+	}, nil
+}
+
+
+// GetFeatures retrieves feature information as a bitmask.
+func GetFeatures() (uint32, error) {
+	features := C.TextToSpeechGetFeatures()
+	if features == 0 {
+		return 0, errors.New("TextToSpeechGetFeatures failed")
+	}
+	return uint32(features), nil
+}
+
+// StatusIdentifier represents a status identifier for GetStatus.
+type StatusIdentifier uint32
+
+const (
+	InputCharacterCount StatusIdentifier = C.INPUT_CHARACTER_COUNT
+)
+
+// StatusValue represents a status value returned by GetStatus.
+type StatusValue struct {
+	Identifier StatusIdentifier
+	Value      uint32
+}
+
+// GetStatus retrieves status information for the given identifiers.
+func (t *TTS) GetStatus(identifiers []StatusIdentifier, count uint32) ([]StatusValue, error) {
+	if count == 0 {
+		return nil, nil
+	}
+	cIdentifiers := make([]C.DWORD, count)
+	for i := uint32(0); i < count; i++ {
+		cIdentifiers[i] = C.DWORD(identifiers[i])
+	}
+	cValues := make([]C.DWORD, count)
+	if err := mmResultToError(C.TextToSpeechGetStatus(t.handle, &cIdentifiers[0], &cValues[0], C.DWORD(count))); err != nil {
+		return nil, err
+	}
+	status := make([]StatusValue, count)
+	for i := uint32(0); i < count; i++ {
+		status[i] = StatusValue{
+			Identifier: StatusIdentifier(cIdentifiers[i]),
+			Value:      uint32(cValues[i]),
+		}
+	}
+	return status, nil
+}
+
+// VersionInfo contains detailed version information.
+type VersionInfo struct {
+	StructSize    uint32
+	StructVersion uint32
+	DLLVersion    uint16
+	DTalkVersion  uint16
+	VerString     string
+	Language      string
+	Features      uint32
+}
+
+// VersionEx retrieves detailed version information.
+func VersionEx() (*VersionInfo, error) {
+	var verPtr C.LPVERSION_INFO
+	if C.TextToSpeechVersionEx(&verPtr) == 0 {
+		return nil, errors.New("TextToSpeechVersionEx failed")
+	}
+	ver := (*C.VERSION_INFO)(unsafe.Pointer(verPtr))
+	return &VersionInfo{
+		StructSize:    uint32(ver.StructSize),
+		StructVersion: uint32(ver.StructVersion),
+		DLLVersion:    uint16(ver.DLLVersion),
+		DTalkVersion:  uint16(ver.DTalkVersion),
+		VerString:     C.GoString(ver.VerString),
+		Language:      C.GoString(ver.Language),
+		Features:      uint32(ver.Features),
+	}, nil
+}
+
+// LangEntry contains information about a language.
+type LangEntry struct {
+	LangCode [3]byte
+	LangName [40]byte
+}
+
+// GetLangCode returns the language code as a string.
+func (l *LangEntry) GetLangCode() string {
+	return string(l.LangCode[:])
+}
+
+// GetLangName returns the language name as a string.
+func (l *LangEntry) GetLangName() string {
+	return string(l.LangName[:])
+}
+
+// LangEnum contains information about available languages.
+type LangEnum struct {
+	Languages uint32
+	MultiLang bool
+	Entries   []LangEntry
+}
+
+// EnumLangs retrieves information about available languages.
+func EnumLangs() (*LangEnum, error) {
+	var langEnumPtr C.LPLANG_ENUM
+	if C.TextToSpeechEnumLangs(&langEnumPtr) == 0 {
+		return nil, errors.New("TextToSpeechEnumLangs failed")
+	}
+	langEnum := (*C.LANG_ENUM)(unsafe.Pointer(langEnumPtr))
+	entries := make([]LangEntry, langEnum.Languages)
+	cEntries := (*[100]C.LANG_ENTRY)(unsafe.Pointer(langEnum.Entries))
+	for i := 0; i < int(langEnum.Languages); i++ {
+		var langCode [3]byte
+		langCode[0] = byte(cEntries[i].lang_code[0])
+		langCode[1] = byte(cEntries[i].lang_code[1])
+		langCode[2] = byte(cEntries[i].lang_code[2])
+		var langName [40]byte
+		for j := 0; j < 40; j++ {
+			langName[j] = byte(cEntries[i].lang_name[j])
+		}
+		entries[i] = LangEntry{
+			LangCode: langCode,
+				LangName: langName,
+		}
+	}
+	return &LangEnum{
+		Languages: uint32(langEnum.Languages),
+		MultiLang: langEnum.MultiLang != 0,
+		Entries:   entries,
+	}, nil
+}
